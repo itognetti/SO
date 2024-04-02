@@ -2,10 +2,17 @@
 #define _LIB_H_
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include "ipc.h"
+#include "slave.h"
+#include "errors.h"
+#include <sys/stat.h>
+#include <sys/stat.h>
 
-void error(char * message, int exitCode);
-
-FILE * openFile(char * path, char * mode);
+#define MD5_LENGTH 32
 
 typedef struct md5Data{
     int pid;
@@ -13,6 +20,10 @@ typedef struct md5Data{
     char file[256];
     int isFinished;
 } md5Data;
+
+void error(char * message, int exitCode);
+
+FILE * openFile(char * path, char * mode);
 
 int isFile(char * path);
 

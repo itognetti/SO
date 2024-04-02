@@ -18,6 +18,11 @@ int main(int argc, char * argv[]){
         }
     }
 
+    int slavesCount = filesCount / NUM_SLAVE_FILES + 1;
+
+    slave slaves[slavesCount];
+
+    
 
     return 0;
 }
