@@ -45,3 +45,25 @@ void createShMem(memData * sharedMem){
         error("Problem mapping shared memory", SHMEM_ERROR);
     }
 }
+
+void openIPC(memData * sMem, semData * semRead, semData * semDone){
+    if((sMem->fd = shm_open(sMem->name, O_RDONLY, S_IRUSR)) == -1)
+        error("Error opening shared memory", SHMEM_ERROR);
+    if((sMem->address = mmap(NULL, sMem->size, PROT_READ, MAP_SHARED, sMem->fd, 0)) == MAP_FAILED)
+        error("Error mapping shared memory", SHMEM_ERROR);
+    if((semRead->sem = sem_open(semRead->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
+        error("Error opening semaphore", SEMAPHORE_ERROR);
+    if((semDone->sem = sem_open(semDone->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
+        error("Error opening semaphore", SEMAPHORE_ERROR);
+}
+
+void closeIPC(memData * sMem, semData * semRead, semData * semDone){
+    if(munmap(sMem->address, sMem->size) == -1)
+        error("Error unmapping shared memory", SHMEM_ERROR);
+    if(close(sMem->fd) == -1)
+        error("Error closing a pipe", PIPE_ERROR);
+    if(sem_close(semRead->name) == -1)
+        error("Error closing semaphore", SEMAPHORE_ERROR);
+    if(sem_close(semDone->name) == -1)
+        error("Error closing semaphore", SEMAPHORE_ERROR);
+}
