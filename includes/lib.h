@@ -7,8 +7,6 @@ void error(char * message, int exitCode);
 
 FILE * openFile(char * path, char * mode);
 
-#define MD5_LENGTH 32
-
 typedef struct md5Data{
     int pid;
     char md5[MD5_LENGTH + 1];

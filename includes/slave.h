@@ -3,7 +3,6 @@
 
 #include "lib.h"
 
-#define MD5_LENGTH 32
 #define STDIN_FD 0
 #define STDOUT_FD 1
 #define NUM_SLAVE_FILES 2
