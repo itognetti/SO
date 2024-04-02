@@ -1,7 +1,7 @@
 #ifndef _VIEW_H_
 #define _VIEW_H_
 
-#include "utils.h"
+#include "lib.h"
 #include "ipc.h"
 #include <string.h>
 

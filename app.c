@@ -9,7 +9,7 @@ int main(int argc, char * argv[]){
     FD_ZERO(&readFds);
 
     if (argc <= 1){
-        error()
+        error("No files found", FILE_ERROR);
     }
 
     return 0;
