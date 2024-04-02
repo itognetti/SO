@@ -18,3 +18,9 @@ int isFile(char * path){
     stat(path, &buffer);
     return S_ISREG(buffer.st_mode);
 }
+
+void createPipe(int fd[2]){
+    if(pipe(fd) == -1){
+        error("Problem creating pipe", PIPE_ERROR);
+    }
+}

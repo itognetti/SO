@@ -22,7 +22,11 @@ int main(int argc, char * argv[]){
 
     slave slaves[slavesCount];
 
-    
+    for(int i = 0; i < slavesCount; i++){
+        createPipe(slaves[i].appToSlave);
+        createPipe(slaves[i].slaveToApp);
+        FD_SET(slaves[i].slaveToApp[STDIN_FD], &readFds);
+    }
 
 
     return 0;

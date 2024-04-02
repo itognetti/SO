@@ -27,4 +27,6 @@ FILE * openFile(char * path, char * mode);
 
 int isFile(char * path);
 
+void createPipe(int fd[2]);
+
 #endif
