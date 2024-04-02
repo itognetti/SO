@@ -29,4 +29,6 @@ int isFile(char * path);
 
 void createPipe(int fd[2]);
 
+void createShMem(memData * sharedMem);
+
 #endif

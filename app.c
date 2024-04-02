@@ -28,6 +28,13 @@ int main(int argc, char * argv[]){
         FD_SET(slaves[i].slaveToApp[STDIN_FD], &readFds);
     }
 
+    readFdsCopy = readFds;
+
+    // Shared memory
+    memData sharedMem;
+    createShMem(&sharedMem); 
+
+    
 
     return 0;
 }
