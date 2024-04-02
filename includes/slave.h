@@ -1,7 +1,7 @@
 #ifndef _SLAVE_H_
 #define _SLAVE_H_
 
-#include "utils.h"
+#include "lib.h"
 
 #define MD5_LENGTH 32
 #define STDIN_FD 0
