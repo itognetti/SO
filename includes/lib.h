@@ -14,6 +14,9 @@
 #include "errors.h"
 
 void error(char * message, int exitCode);
+
 FILE * openFile(char * path, char * mode);
+
+int isFile(char * path);
 
 #endif

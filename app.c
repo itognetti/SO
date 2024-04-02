@@ -12,5 +12,12 @@ int main(int argc, char * argv[]){
         error("No files found", FILE_ERROR);
     }
 
+    for(int i = 1; i < argc; i++){
+        if (isFile(argv[i])){
+            files[filesCount++] = argv[i];
+        }
+    }
+
+
     return 0;
 }

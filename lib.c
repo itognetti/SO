@@ -12,3 +12,9 @@ FILE * openFile(char * path, char * mode){
     }
     return file;
 }
+
+int isFile(char * path){
+    struct stat buffer;
+    stat(path, &buffer);
+    return S_ISREG(buffer.st_mode);
+}
