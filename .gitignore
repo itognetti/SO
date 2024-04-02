@@ -1,0 +1,8 @@
+*.txt
+
+# Object files
+*.o
+
+# User or IDE created files
+.bash_history
+.vscode
