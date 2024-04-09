@@ -1,10 +1,11 @@
 #include "./includes/app.h"
 
 int main(int argc, char * argv[]){
+
     char * files[argc];
     int filesCount = 0;
-
     FILE * file = openFile("result.txt", "w");
+
     fd_set readFds, readFdsCopy;
     FD_ZERO(&readFds);
 
@@ -23,14 +24,13 @@ int main(int argc, char * argv[]){
     slave slaves[slavesCount];
 
     for(int i = 0; i < slavesCount; i++){
-        createPipe(slaves[i].appToSlave);
-        createPipe(slaves[i].slaveToApp);
+        generatePipe(slaves[i].slaveToApp);
+        generatePipe(slaves[i].appToSlave);
         FD_SET(slaves[i].slaveToApp[STDIN_FD], &readFds);
     }
 
     readFdsCopy = readFds;
 
-    // Shared memory
     memData sharedMem;
     createShMem(&sharedMem); 
 

@@ -1,37 +1,38 @@
 #include "./includes/view.h"
 
 int main(int argc, char * argv[]){
-    char sMemName[VIEW_BUFFER_SIZE], semReadName[VIEW_BUFFER_SIZE], semDoneName[VIEW_BUFFER_SIZE];
-    memData sMem;
+
+    char semReadName[VIEW_BUFFER_SIZE], semDoneName[VIEW_BUFFER_SIZE], sharedMemName[VIEW_BUFFER_SIZE];
     semData semRead, semDone;
-    md5Data buffer;
+    memData sharedMem;
+    md5Data hashBuffer;
+    int finished = 0;
 
     if(argc >= 4){
-        strncpy(sMemName, argv[1], VIEW_BUFFER_SIZE);
+        strncpy(sharedMemName, argv[1], VIEW_BUFFER_SIZE);
         strncpy(semReadName, argv[2], VIEW_BUFFER_SIZE);
         strncpy(semDoneName, argv[3], VIEW_BUFFER_SIZE);
-    }else{
-        scanf("%s", sMemName);
+    }
+    else {
+        scanf("%s", sharedMemName);
         scanf("%s", semReadName);
         scanf("%s", semDoneName);
     }
 
-    sMem.name = sMemName;
-    sMem.size = MEM_SIZE;
-    semRead.name = semReadName;
+    sharedMem.name = sharedMemName;
+    sharedMem.size = MEM_SIZE;
     semDone.name = semDoneName;
+    semRead.name = semReadName;
 
-    openIPC(&sMem, &semRead, &semDone);
+    openIPC(&sharedMem, &semRead, &semDone);
 
-    int finish = 0;
-
-    while(!finish){
-        printf("File: %s - MD5: %s - PID: %d", buffer.file, buffer.md5, buffer.pid);
-        if(buffer.isFinished)
-            finish = 1;
+    while(!finished){
+        printf("File: %s - MD5: %s - PID: %d", hashBuffer.file, hashBuffer.md5, hashBuffer.pid);
+        if(hashBuffer.isFinished)
+            finished = 1;
     }
 
-    closeIPC(&sMem, &semRead, &semDone);
+    closeIPC(&sharedMem, &semRead, &semDone);
 
     return 0;
 }

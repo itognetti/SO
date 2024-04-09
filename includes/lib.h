@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 
 #define MD5_LENGTH 32
+#define MD5_PATH "/usr/bin/md5sum"
 
 typedef struct md5Data{
     int pid;
@@ -27,8 +28,12 @@ FILE * openFile(char * path, char * mode);
 
 int isFile(char * path);
 
-void createPipe(int fd[2]);
+void generatePipe(int fd[2]);
+
+void dupPipe(int oldfd, int newfd); 
 
 void createShMem(memData * sharedMem);
+
+int generateSlave();
 
 #endif
