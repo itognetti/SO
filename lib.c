@@ -73,6 +73,7 @@ int generateSlave(){
     if ((pid = fork()) == -1){
         error("An error ocurred while creating a slave", SLAVE_ERROR);
     }
+    return pid;
 }
 
 void dupPipe(int oldFd, int newFd){
