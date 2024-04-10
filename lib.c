@@ -21,29 +21,66 @@ int isFile(char * path){
 
 void generatePipe(int fd[2]){
     if(pipe(fd) == -1){
-        error("An error ocurred while creating a pipe", PIPE_ERROR);
+        error("An error ocurred while generating a pipe", PIPE_ERROR);
     }
 }
 
-void createShMem(memData * sharedMem){
+void dupPipe(int oldFd, int newFd){
+    if (dup2(oldFd, newFd) == -1){
+        error("An error ocurred while generating a copy of a file descriptor", PIPE_ERROR);
+    }
+}
+
+void closePipe(int fd){
+    if(close(fd) == -1){
+        error("An error ocurred while closing a pipe", PIPE_ERROR);
+    }
+}
+
+
+void generateShMem(memData * sharedMem){
     sharedMem->name = MEM_NAME;
     sharedMem->size = MEM_SIZE;
-    int memFd = shm_open(sharedMem->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    sharedMem->fd = shm_open(sharedMem->name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 
-    if (memFd == -1){
-        error("An error ocurred while creating the shared memory", SHMEM_ERROR);
+    if (sharedMem->fd == -1){
+        error("An error ocurred while generating the shared memory", SHMEM_ERROR);
     }
 
-    if(ftruncate(memFd, sharedMem->size) == -1){
+    if(ftruncate(sharedMem->fd, sharedMem->size) == -1){
         error("An error ocurred while truncating the shared memory", SHMEM_ERROR);
     }
 
-    sharedMem->fd = memFd;
-    sharedMem->address = mmap(NULL, sharedMem->size, PROT_READ | PROT_WRITE, MAP_SHARED, memFd, 0);
+    sharedMem->address = mmap(NULL, sharedMem->size, PROT_READ | PROT_WRITE, MAP_SHARED, sharedMem->fd, 0);
 
     if(sharedMem->address == MAP_FAILED){
         error("An error ocurred while mapping the shared memory", SHMEM_ERROR);
     }
+}
+
+void unlinkShMem(memData * sharedMem){
+    if(shm_unlink(sharedMem->name) == -1){
+        error("An error ocurred while unlinking the shared memory", SHMEM_ERROR);
+    }
+}
+
+void * generateSem(semData * semaphore, char * semName){
+    semaphore->name = semName;
+    return (semaphore->address = sem_open(semaphore->name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR, 0));   
+}
+
+void unlinkSem(semData * semaphore){
+    if(shm_unlink(semaphore->name) == -1){
+        error("An error ocurred while unlinking the semaphores", SEMAPHORE_ERROR);
+    }
+}
+
+int generateSlave(){
+    int pid;
+    if ((pid = fork()) == -1){
+        error("An error ocurred while generating a slave", SLAVE_ERROR);
+    }
+    return pid;
 }
 
 void openIPC(memData * sMem, semData * semRead, semData * semDone){
@@ -51,9 +88,9 @@ void openIPC(memData * sMem, semData * semRead, semData * semDone){
         error("An error ocurred while opening the shared memory", SHMEM_ERROR);
     if((sMem->address = mmap(NULL, sMem->size, PROT_READ, MAP_SHARED, sMem->fd, 0)) == MAP_FAILED)
         error("An error ocurred while mapping the shared memory", SHMEM_ERROR);
-    if((semRead->sem = sem_open(semRead->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
+    if((semRead->address = sem_open(semRead->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
         error("An error ocurred while opening a semaphore", SEMAPHORE_ERROR);
-    if((semDone->sem = sem_open(semDone->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
+    if((semDone->address = sem_open(semDone->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
         error("An error ocurred while opening a semaphore", SEMAPHORE_ERROR);
 }
 
@@ -67,18 +104,3 @@ void closeIPC(memData * sMem, semData * semRead, semData * semDone){
     if(sem_close(semDone->name) == -1)
         error("An error ocurred while closing a semaphore", SEMAPHORE_ERROR);
 }
-
-int generateSlave(){
-    int pid;
-    if ((pid = fork()) == -1){
-        error("An error ocurred while creating a slave", SLAVE_ERROR);
-    }
-    return pid;
-}
-
-void dupPipe(int oldFd, int newFd){
-    if (dup2(oldFd, newFd) == -1){
-        error("An error ocurred while creating a copy of a file descriptor", PIPE_ERROR);
-    }
-}
-

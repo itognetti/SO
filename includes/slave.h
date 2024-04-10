@@ -11,7 +11,7 @@ typedef struct slave {
     int appToSlave[2];
     int slaveToApp[2];
     char *filename;
-    int process_id;
+    int pid;
 } slave;
 
 int slaveProcess(int *appToSlave, int *slaveToApp);

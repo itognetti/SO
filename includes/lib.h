@@ -25,14 +25,17 @@ typedef struct md5Data{
 void error(char * message, int exitCode);
 
 FILE * openFile(char * path, char * mode);
-
 int isFile(char * path);
 
 void generatePipe(int fd[2]);
-
 void dupPipe(int oldfd, int newfd); 
+void closePipe(int fd);
 
-void createShMem(memData * sharedMem);
+void generateShMem(memData * sharedMem);
+void unlinkShMem(memData * sharedMem);
+
+void * generateSem(semData * semaphore, char * semName);
+void unlinkSem(semData * semaphore);
 
 int generateSlave();
 

@@ -18,7 +18,7 @@ typedef struct memData{
 
 typedef struct semData{
     char * name;
-    sem_t * sem;
+    sem_t * address;
 } semData;
 
 #endif
