@@ -106,7 +106,7 @@ void closeIPC(memData * sMem, semData * semRead, semData * semDone){
 }
 
 void readFromSMem(memData * sMem, const void * buffer, size_t size, int offset, semData * semDone){
-    if(read(sMem->fd, buffer, size, offset * size) == -1){
+    if(pread(sMem->fd, buffer, size, offset * size) == -1){
         sem_post(semDone->address);
         error("An error ocurred while reading from shared memory", SHMEM_ERROR);
     }

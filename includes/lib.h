@@ -10,7 +10,6 @@
 #include "slave.h"
 #include "errors.h"
 #include <sys/stat.h>
-#include <sys/stat.h>
 
 #define MD5_LENGTH 32
 #define MD5_PATH "/usr/bin/md5sum"
