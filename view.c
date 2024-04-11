@@ -1,5 +1,4 @@
 #include "./includes/view.h"
-#include "./includes/errors.h"
 
 int main(int argc, char * argv[]){
 
@@ -7,7 +6,6 @@ int main(int argc, char * argv[]){
     semData semRead, semDone;
     memData sharedMem;
     md5Data hashBuffer;
-    
 
     if(argc >= 4){
         strncpy(sharedMemName, argv[1], VIEW_BUFFER_SIZE);
@@ -30,15 +28,9 @@ int main(int argc, char * argv[]){
     sem_wait(semDone.address);
     setvbuf(stdout, NULL, _IONBF, 0); //Si no esta no se imprimen los hashes
 
-    int finished = 0;
-    int i = 0;
-    while(!finished){
+    for(int i = 0, finished = 0; !finished; i++){
         sem_wait(semRead.address);
-        if(pread(sharedMem.fd, &hashBuffer, sizeof(hashBuffer), i * sizeof(hashBuffer)) == -1){
-            sem_post(semRead.address);
-            exit("Problem reading from shared memory", SHMEM_ERROR);
-        }
-        i++;
+        readFromSMem(&sharedMem, &hashBuffer, sizeof(hashBuffer), i, &semDone);
 
         printf("File: %s - MD5: %s - PID: %d", hashBuffer.file, hashBuffer.md5, hashBuffer.pid);
         if(hashBuffer.isFinished)
