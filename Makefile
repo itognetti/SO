@@ -1,6 +1,6 @@
 RM := rm -f
 GCC := gcc
-GCCFLAGS := -Wall -std=c99 -g -lrt -phtread
+GCCFLAGS := -Wall -std=c99 -g -lrt -pthread
 SOURCES_APP := slave.c lib.c
 SOURCES_VIEW := lib.c 
 

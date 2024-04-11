@@ -39,4 +39,8 @@ void unlinkSem(semData * semaphore);
 
 int generateSlave();
 
+void openIPC(memData * sMem, semData * semRead, semData * semDone);
+void closeIPC(memData * sMem, semData * semRead, semData * semDone);
+void readFromSMem(memData * sMem, const void * buffer, size_t size, int offset, semData * semDone);
+
 #endif
