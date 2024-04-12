@@ -78,6 +78,36 @@ int main(int argc, char * argv[]){
             closePipe(slaves[i].appToSlave[STDIN_FD]);
             closePipe(slaves[i].slaveToApp[STDOUT_FD]);
         }
+        char ActualHash[MD5_LENGTH + 1]={0};
+        int filesCountRead=0,filesCountSent=0;
+        hashInfo buffer; //de tipo hashInfo
+        memset(&buffer,0,sizeof(hasInfo));
+        
+        for(int i=0;FilesSent <slavesCount;i++ ){
+            write(slaves[i].appToSlave[STDIN_FD], &(files[filesCountSent]), sizeof(char *)); 
+            slaves[i].fileName = files[FilesSent++];
+        }
+
+        while(filesCountRead<filesCount){
+            if(select(FD_SETSIZE ,&readFds,NULL,NULL,NULL)==-1){ //FD_SETSIZE
+                perror("File Descpritor Error");
+                exit(SELECT_ERROR);
+            }
+            for(int i=0;i<slavesCount && filesCountRead<filesCount;i++){
+                if(FD_ISSET(slaves[i].slaveToMaster[STDIN], &readFds)){
+                    if(read(slaves[i].slaveToMaster[STDIN], hash, MD5_LENGTH + 1) == -1){
+                        error("Pipe Error", PIPE_ERROR);
+                    }
+                    buffer.pid = slaves[i].pid;
+                    strcpy(buffer.hash, hash);
+                    strcpy(buffer.file, slaves[i].name);
+
+                }
+
+            }
+
+        }
+        
 
         // To be continued...
 
