@@ -79,21 +79,22 @@ int main(int argc, char * argv[]){
             closePipe(slaves[i].slaveToApp[STDOUT_FD]);
         }
         char ActualHash[MD5_LENGTH + 1] = {0};
-        int filesCount = 0;
+        int currentFile = 0;
+        int filesRead = 0;
         md5Data buffer;
         memset(&buffer, 0, sizeof(md5Data));
         
-        for(int i = 0; filesCount < slavesCount; i++ ){
-            write(slaves[i].appToSlave[STDIN_FD], &(files[filesCount]), sizeof(char *)); 
-            slaves[i].filename = files[filesCount++];
+        for(int i = 0; currentFile < slavesCount; i++ ){
+            write(slaves[i].appToSlave[STDIN_FD], &(files[currentFile]), sizeof(char *)); 
+            slaves[i].filename = files[currentFile++];
         }
 
-        while(filesCount < filesCount){
+        while(filesRead < filesCount){
             if(select(FD_SETSIZE, &readFds, NULL, NULL, NULL) == -1){
                 perror("File Descpritor Error");
                 exit(SELECT_ERROR);
             }
-            for(int i = 0; i < slavesCount && filesCount < filesCount; i++){
+            for(int i = 0; i < slavesCount && filesRead < filesCount; i++){
                 if(FD_ISSET(slaves[i].slaveToApp[STDIN_FD], &readFds)){
                     if(read(slaves[i].slaveToApp[STDIN_FD], ActualHash, MD5_LENGTH + 1) == -1){
                         error("Pipe Error", PIPE_ERROR);
@@ -101,12 +102,31 @@ int main(int argc, char * argv[]){
                     buffer.pid = slaves[i].pid;
                     strcpy(buffer.md5, ActualHash);
                     strcpy(buffer.file, slaves[i].filename);
+                    if(filesCount - filesRead <= 1){
+                        buffer.isFinished = 1;
+                    }
+                    fprintf(file, "PID: %d, HASH: %s, FILE: %s\n", buffer.pid, buffer.hash, buffer.file);
+                    writeInSharedMemory(shmem.fd, &buffer, sizeof(hashData), filesRead);
+                    sem_post(semaphoreRead.semaphore);
+                    filesRead++;
+                    if(currentFile < filesCount){
+                        write(slaves[i].appToSlave[1], &(files[currentFile]), sizeof(char *));
+                        slaves[i].name = files[currentFile++];
+                    }
 
                 }
 
             }
+            readFds = readFdsBackup;
 
         }
+        for(int i = 0; i < slavesCount; i++){
+            closePipe(slaves[i].appToSlave[STDOUT]);
+            closePipe(slaves[i].slaveToApp[STDIN]);
+            kill(slaves[i].pid, SIGKILL);//SIGKILL
+        }
+        sem_wait(semaphoreDone.semaphore);
+        closeApplication(&shmem, &semaphoreRead, &semaphoreDone, file);
         
 
         // To be continued...
