@@ -78,29 +78,29 @@ int main(int argc, char * argv[]){
             closePipe(slaves[i].appToSlave[STDIN_FD]);
             closePipe(slaves[i].slaveToApp[STDOUT_FD]);
         }
-        char ActualHash[MD5_LENGTH + 1]={0};
-        int filesCountRead=0,filesCountSent=0;
-        hashInfo buffer; //de tipo hashInfo
-        memset(&buffer,0,sizeof(hasInfo));
+        char ActualHash[MD5_LENGTH + 1] = {0};
+        int filesCount = 0;
+        md5Data buffer;
+        memset(&buffer, 0, sizeof(md5Data));
         
-        for(int i=0;FilesSent <slavesCount;i++ ){
-            write(slaves[i].appToSlave[STDIN_FD], &(files[filesCountSent]), sizeof(char *)); 
-            slaves[i].fileName = files[FilesSent++];
+        for(int i = 0; filesCount < slavesCount; i++ ){
+            write(slaves[i].appToSlave[STDIN_FD], &(files[filesCount]), sizeof(char *)); 
+            slaves[i].filename = files[filesCount++];
         }
 
-        while(filesCountRead<filesCount){
-            if(select(FD_SETSIZE ,&readFds,NULL,NULL,NULL)==-1){ //FD_SETSIZE
+        while(filesCount < filesCount){
+            if(select(FD_SETSIZE, &readFds, NULL, NULL, NULL) == -1){
                 perror("File Descpritor Error");
                 exit(SELECT_ERROR);
             }
-            for(int i=0;i<slavesCount && filesCountRead<filesCount;i++){
-                if(FD_ISSET(slaves[i].slaveToMaster[STDIN], &readFds)){
-                    if(read(slaves[i].slaveToMaster[STDIN], hash, MD5_LENGTH + 1) == -1){
+            for(int i = 0; i < slavesCount && filesCount < filesCount; i++){
+                if(FD_ISSET(slaves[i].slaveToApp[STDIN_FD], &readFds)){
+                    if(read(slaves[i].slaveToApp[STDIN_FD], ActualHash, MD5_LENGTH + 1) == -1){
                         error("Pipe Error", PIPE_ERROR);
                     }
                     buffer.pid = slaves[i].pid;
-                    strcpy(buffer.hash, hash);
-                    strcpy(buffer.file, slaves[i].name);
+                    strcpy(buffer.md5, ActualHash);
+                    strcpy(buffer.file, slaves[i].filename);
 
                 }
 
