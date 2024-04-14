@@ -61,7 +61,7 @@ int main(int argc, char * argv[]){
     int currentPid;
     slave currentSlave;
 
-    for(currentSlaveIndex; currentSlaveIndex < slavesCount && currentPid != 0; currentSlaveIndex++){
+    for( ; currentSlaveIndex < slavesCount && currentPid != 0; currentSlaveIndex++){
             currentPid = generateSlave();
             slaves[currentSlaveIndex].pid = currentPid;
     }
@@ -78,11 +78,13 @@ int main(int argc, char * argv[]){
             closePipe(slaves[i].appToSlave[STDIN_FD]);
             closePipe(slaves[i].slaveToApp[STDOUT_FD]);
         }
-        char ActualHash[MD5_LENGTH + 1] = {0};
-        int currentFile = 0;
+
         int filesRead = 0;
-        md5Data buffer;
-        memset(&buffer, 0, sizeof(md5Data));
+        md5Data hashBuffer;
+        char actualHash[MD5_LENGTH + 1] = {0};
+        int currentFile = 0;
+
+        memset(&hashBuffer, 0, sizeof(md5Data));
         
         for(int i = 0; currentFile < slavesCount; i++ ){
             write(slaves[i].appToSlave[STDIN_FD], &(files[currentFile]), sizeof(char *)); 
@@ -91,46 +93,56 @@ int main(int argc, char * argv[]){
 
         while(filesRead < filesCount){
             if(select(FD_SETSIZE, &readFds, NULL, NULL, NULL) == -1){
-                perror("File Descpritor Error");
-                exit(SELECT_ERROR);
+                error("An error ocurred while executing the select", SELECT_ERROR);
             }
+
             for(int i = 0; i < slavesCount && filesRead < filesCount; i++){
                 if(FD_ISSET(slaves[i].slaveToApp[STDIN_FD], &readFds)){
-                    if(read(slaves[i].slaveToApp[STDIN_FD], ActualHash, MD5_LENGTH + 1) == -1){
-                        error("Pipe Error", PIPE_ERROR);
+                    if(read(slaves[i].slaveToApp[STDIN_FD], actualHash, MD5_LENGTH + 1) == -1){
+                        error("An error ocurred while reading from the pipe", PIPE_ERROR);
                     }
-                    buffer.pid = slaves[i].pid;
-                    strcpy(buffer.md5, ActualHash);
-                    strcpy(buffer.file, slaves[i].filename);
+
+                    hashBuffer.pid = slaves[i].pid;
+                    strcpy(hashBuffer.md5, actualHash);
+                    strcpy(hashBuffer.file, slaves[i].filename);
+
                     if(filesCount - filesRead <= 1){
-                        buffer.isFinished = 1;
+                        hashBuffer.isFinished = 1;
                     }
-                    fprintf(file, "PID: %d, HASH: %s, FILE: %s\n", buffer.pid, buffer.hash, buffer.file);
-                    writeInSharedMemory(shmem.fd, &buffer, sizeof(hashData), filesRead);
-                    sem_post(semaphoreRead.semaphore);
+
+                    fprintf(file, "File: %s - MD5: %s - PID: %d", hashBuffer.file, hashBuffer.md5, hashBuffer.pid);
+
+                    writeToShMem(sharedMem.fd, &hashBuffer, sizeof(md5Data), filesRead);
+
+                    sem_post(semRead.address);
+
                     filesRead++;
+
                     if(currentFile < filesCount){
                         write(slaves[i].appToSlave[1], &(files[currentFile]), sizeof(char *));
-                        slaves[i].name = files[currentFile++];
+                        slaves[i].filename = files[currentFile];
+                        currentFile++;
                     }
-
                 }
-
             }
             readFds = readFdsBackup;
-
         }
-        for(int i = 0; i < slavesCount; i++){
-            closePipe(slaves[i].appToSlave[STDOUT]);
-            closePipe(slaves[i].slaveToApp[STDIN]);
-            kill(slaves[i].pid, SIGKILL);//SIGKILL
+
+        for(int i = 0; i < slavesCount; i++){                        
+            closePipe(slaves[i].slaveToApp[STDIN_FD]);
+            closePipe(slaves[i].appToSlave[STDOUT_FD]);
+            kill(slaves[i].pid, SIGKILL);
         }
-        sem_wait(semaphoreDone.semaphore);
-        closeApplication(&shmem, &semaphoreRead, &semaphoreDone, file);
-        
 
-        // To be continued...
+        sem_wait(semDone.address);
 
+        closeComms(&sharedMem, &semRead, &semDone);
+
+        closeFile(file);
+
+        unlinkShMem(&sharedMem);
+        unlinkSem(&semDone);
+        unlinkSem(&semRead);
     }
 
     return 0;

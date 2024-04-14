@@ -19,6 +19,12 @@ int isFile(char * path){
     return S_ISREG(buffer.st_mode);
 }
 
+void closeFile(FILE * file){
+    if(fclose(file) == EOF){
+        error("An error ocurred while closing a file", FILE_ERROR);
+    }
+}
+
 void generatePipe(int fd[2]){
     if(pipe(fd) == -1){
         error("An error ocurred while generating a pipe", PIPE_ERROR);
@@ -36,7 +42,6 @@ void closePipe(int fd){
         error("An error ocurred while closing a pipe", PIPE_ERROR);
     }
 }
-
 
 void generateShMem(memData * sharedMem){
     sharedMem->name = MEM_NAME;
@@ -64,6 +69,26 @@ void unlinkShMem(memData * sharedMem){
     }
 }
 
+void readFromShMem(memData * sMem, void * buffer, size_t size, int offset, semData * semDone){
+    if(pread(sMem->fd, buffer, size, offset * size) == -1){
+        sem_post(semDone->address);
+        error("An error ocurred while reading from shared memory", SHMEM_ERROR);
+    }
+}
+
+void writeToShMem(int fd, const void * buffer, size_t size, int offset){
+    if(pwrite(fd, buffer, size, size * offset) == -1){
+        error("An error ocurred while writing in the shared memory", SHMEM_ERROR);
+    }
+}
+
+void closeShMem(memData * sharedMem){
+    if(munmap(sharedMem->address, sharedMem->size) == -1){
+        error("An error ocurred while unmapping the shared memory", SHMEM_ERROR);
+    }
+    closePipe(sharedMem->fd);
+}
+
 void * generateSem(semData * semaphore, char * semName){
     semaphore->name = semName;
     return (semaphore->address = sem_open(semaphore->name, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR, 0));   
@@ -71,7 +96,13 @@ void * generateSem(semData * semaphore, char * semName){
 
 void unlinkSem(semData * semaphore){
     if(shm_unlink(semaphore->name) == -1){
-        error("An error ocurred while unlinking the semaphores", SEMAPHORE_ERROR);
+        error("An error ocurred while unlinking a semaphore", SEMAPHORE_ERROR);
+    }
+}
+
+void closeSem(semData * semaphore){
+    if (sem_close(semaphore->address) == -1){
+        error("An error ocurred while closing a semaphore", SEMAPHORE_ERROR);
     }
 }
 
@@ -83,31 +114,26 @@ int generateSlave(){
     return pid;
 }
 
-void openIPC(memData * sMem, semData * semRead, semData * semDone){
-    if((sMem->fd = shm_open(sMem->name, O_RDONLY, S_IRUSR)) == -1)
+void openComms(memData * sharedMem, semData * semRead, semData * semDone){
+    if((sharedMem->fd = shm_open(sharedMem->name, O_RDONLY, S_IRUSR)) == -1){
         error("An error ocurred while opening the shared memory", SHMEM_ERROR);
-    if((sMem->address = mmap(NULL, sMem->size, PROT_READ, MAP_SHARED, sMem->fd, 0)) == MAP_FAILED)
-        error("An error ocurred while mapping the shared memory", SHMEM_ERROR);
-    if((semRead->address = sem_open(semRead->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
-        error("An error ocurred while opening a semaphore", SEMAPHORE_ERROR);
-    if((semDone->address = sem_open(semDone->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED)
-        error("An error ocurred while opening a semaphore", SEMAPHORE_ERROR);
-}
-
-void closeIPC(memData * sMem, semData * semRead, semData * semDone){
-    if(munmap(sMem->address, sMem->size) == -1)
-        error("An error ocurred while unmapping the shared memory", SHMEM_ERROR);
-    if(close(sMem->fd) == -1)
-        error("An error ocurred while closing a pipe", PIPE_ERROR);
-    if(sem_close(semRead->address) == -1)
-        error("An error ocurred while closing a semaphore", SEMAPHORE_ERROR);
-    if(sem_close(semDone->address) == -1)
-        error("An error ocurred while closing a semaphore", SEMAPHORE_ERROR);
-}
-
-void readFromSMem(memData * sMem, const void * buffer, size_t size, int offset, semData * semDone){
-    if(pread(sMem->fd, buffer, size, offset * size) == -1){
-        sem_post(semDone->address);
-        error("An error ocurred while reading from shared memory", SHMEM_ERROR);
     }
+
+    if((sharedMem->address = mmap(NULL, sharedMem->size, PROT_READ, MAP_SHARED, sharedMem->fd, 0)) == MAP_FAILED){
+        error("An error ocurred while mapping the shared memory", SHMEM_ERROR);
+    }
+
+    if((semRead->address = sem_open(semRead->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED){
+        error("An error ocurred while opening a semaphore", SEMAPHORE_ERROR);
+    }
+        
+    if((semDone->address = sem_open(semDone->name, O_RDONLY, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED){
+        error("An error ocurred while opening a semaphore", SEMAPHORE_ERROR);
+    }
+}
+
+void closeComms(memData * sharedMem, semData * semRead, semData * semDone){
+    closeShMem(sharedMem);
+    closeSem(semRead);
+    closeSem(semDone);
 }
