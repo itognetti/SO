@@ -24,8 +24,8 @@ int main(int argc, char * argv[]){
     slave slaves[slavesCount];
 
     for(int i = 0; i < slavesCount; i++){
-        generatePipe(slaves[i].slaveToApp);
         generatePipe(slaves[i].appToSlave);
+        generatePipe(slaves[i].slaveToApp);
         FD_SET(slaves[i].slaveToApp[STDIN_FD], &readFds);
     }
 
@@ -58,7 +58,7 @@ int main(int argc, char * argv[]){
     sleep(4);
 
     int currentSlaveIndex = 0;
-    int currentPid;
+    int currentPid = 1;
     slave currentSlave;
 
     for( ; currentSlaveIndex < slavesCount && currentPid != 0; currentSlaveIndex++){
@@ -68,7 +68,6 @@ int main(int argc, char * argv[]){
 
     if(currentPid == 0){
         currentSlave = slaves[currentSlaveIndex - 1];
-
         closePipe(currentSlave.appToSlave[STDOUT_FD]);
         closePipe(currentSlave.slaveToApp[STDIN_FD]);
         slaveProcess(currentSlave.appToSlave, currentSlave.slaveToApp);
@@ -87,7 +86,7 @@ int main(int argc, char * argv[]){
         memset(&hashBuffer, 0, sizeof(md5Data));
         
         for(int i = 0; currentFile < slavesCount; i++ ){
-            write(slaves[i].appToSlave[STDIN_FD], &(files[currentFile]), sizeof(char *)); 
+            write(slaves[i].appToSlave[STDOUT_FD], &(files[currentFile]), sizeof(char *)); 
             slaves[i].filename = files[currentFile++];
         }
 
@@ -110,7 +109,7 @@ int main(int argc, char * argv[]){
                         hashBuffer.isFinished = 1;
                     }
 
-                    fprintf(file, "File: %s - MD5: %s - PID: %d", hashBuffer.file, hashBuffer.md5, hashBuffer.pid);
+                    fprintf(file, "File: %s - MD5: %s - PID: %d \n", hashBuffer.file, hashBuffer.md5, hashBuffer.pid);
 
                     writeToShMem(sharedMem.fd, &hashBuffer, sizeof(md5Data), filesRead);
 
@@ -128,9 +127,9 @@ int main(int argc, char * argv[]){
             readFds = readFdsBackup;
         }
 
-        for(int i = 0; i < slavesCount; i++){                        
+        for(int i = 0; i < slavesCount; i++){   
+            closePipe(slaves[i].appToSlave[STDOUT_FD]);                     
             closePipe(slaves[i].slaveToApp[STDIN_FD]);
-            closePipe(slaves[i].appToSlave[STDOUT_FD]);
             kill(slaves[i].pid, SIGKILL);
         }
 
@@ -141,8 +140,8 @@ int main(int argc, char * argv[]){
         closeFile(file);
 
         unlinkShMem(&sharedMem);
-        unlinkSem(&semDone);
         unlinkSem(&semRead);
+        unlinkSem(&semDone);
     }
 
     return 0;

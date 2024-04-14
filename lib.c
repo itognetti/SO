@@ -95,7 +95,7 @@ void * generateSem(semData * semaphore, char * semName){
 }
 
 void unlinkSem(semData * semaphore){
-    if(shm_unlink(semaphore->name) == -1){
+    if(sem_unlink(semaphore->name) == -1){
         error("An error ocurred while unlinking a semaphore", SEMAPHORE_ERROR);
     }
 }

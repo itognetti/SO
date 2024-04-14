@@ -33,7 +33,7 @@ int main(int argc, char * argv[]){
         sem_wait(semRead.address);
         readFromShMem(&sharedMem, &hashBuffer, sizeof(hashBuffer), i, &semDone);
 
-        printf("File: %s - MD5: %s - PID: %d", hashBuffer.file, hashBuffer.md5, hashBuffer.pid);
+        printf("File: %s - MD5: %s - PID: %d \n", hashBuffer.file, hashBuffer.md5, hashBuffer.pid);
 
         if(hashBuffer.isFinished){
             finished = 1;
