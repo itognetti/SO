@@ -52,10 +52,8 @@ int main(int argc, char * argv[]){
     setvbuf(stdout, NULL, _IONBF, 0);
 
     printf("%s\n", MEM_NAME);
-    printf("%s\n", SEM_READ_NAME);
-    printf("%s\n", SEM_DONE_NAME);
 
-    sleep(4);
+    sleep(2);
 
     int currentSlaveIndex = 0;
     int currentPid = 1;
