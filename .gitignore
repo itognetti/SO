@@ -10,3 +10,5 @@ files/
 # User or IDE created files
 .bash_history
 .vscode
+
+.DS_Store
