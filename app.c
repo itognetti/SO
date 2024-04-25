@@ -65,6 +65,15 @@ int main(int argc, char * argv[]){
     }
 
     if(currentPid == 0){
+        for(int i = 0; i < slavesCount; i++){
+            if(i != currentSlaveIndex - 1){
+                closePipe(slaves[i].appToSlave[STDIN_FD]);
+                closePipe(slaves[i].appToSlave[STDOUT_FD]);
+                closePipe(slaves[i].slaveToApp[STDIN_FD]);
+                closePipe(slaves[i].slaveToApp[STDOUT_FD]);
+            }
+        }
+
         currentSlave = slaves[currentSlaveIndex - 1];
         closePipe(currentSlave.appToSlave[STDOUT_FD]);
         closePipe(currentSlave.slaveToApp[STDIN_FD]);
